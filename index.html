@@ -1,0 +1,337 @@
+﻿<head>
+<!-- Plotly.js -->
+	<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<!--<script src="sampledata.js"></script>-->
+	<script src="data.js"></script>
+	</head>
+	<body>
+
+	<select id="selectColumnBlue" style="width:200px; height:30px; font-family:Arial; background-color:lightBlue" onclick="selectColumnBlue_Changed()">
+        <option value="" disabled selected hidden>Choose for Blue Dots</option>
+	</select>
+	<select id="selectColumnRed" style="width:200px; height:30px; font-family:Arial; background-color:pink" onclick="selectColumnRed_Changed()">
+        <option value="" disabled selected hidden>Choose for Red Dots</option>
+	</select>
+	<button id="btnTranspose" style="margin-left:20px; height:30px; font-family:Arial" onclick="btnTranspose_Click()">Transpose</button>
+	<!-- Plotly chart will be drawn inside this DIV -->
+	<div id="boxPlot1Div" style="margin-left:30px; margin-right:30px; margin-top: 20px; margin-bottom:20px;height:2000px"></div>
+
+	<script>
+	var isTransposed = false;
+	var blueIndex = -1;
+	var redIndex = -1;
+	var rowCount = 0;
+	var scatterX = [];
+	var scatterY = [];
+	var traceData = [];
+	var xMin = 0.0;
+	var xMax = 0.0;
+	var y = [];
+
+	activate();
+
+	function activate() {
+		buildData();
+		displayData(true);
+	}
+
+	function selectColumnBlue_Changed() {
+		var selectColumnBlue = document.getElementById('selectColumnBlue');
+		blueIndex = selectColumnBlue.selectedIndex;
+		buildData();
+		displayData(false);
+	}
+
+	function selectColumnRed_Changed() {
+		var selectColumnRed = document.getElementById('selectColumnRed');
+		redIndex = selectColumnRed.selectedIndex;
+		buildData();
+		displayData(false);
+	}
+
+	function btnTranspose_Click() {
+		if (isTransposed == false) {
+			isTransposed = true;
+			transpose();
+			buildData();
+			displayData(true);
+			return;
+		}
+		isTransposed = true;
+		transpose();
+		buildData();
+		displayData(true);
+	}
+
+	function transpose() {
+		var newBoxPlotCols = [];
+		var j = 0;
+		var k = 0;
+		var jMax = boxPlotData.length;
+		for (j = 0; j < jMax; j++) {
+			newBoxPlotCols.push(boxPlotData[j][0]);
+		}
+		var newBoxPlotData = [];
+		kMax = boxPlotData[0][1].length;
+		for (k = 0; k < kMax; k++) {
+			newBoxPlotData.push([]);
+			newBoxPlotData[k].push(boxPlotCols[k]);
+			newBoxPlotData[k].push([]);
+			newBoxPlotData[k].push(boxPlotData[0][1][k]);
+			for (j = 0; j < jMax; j++) {
+				newBoxPlotData[k][1].push(boxPlotData[j][1][k]);
+			}
+		}
+		boxPlotCols = newBoxPlotCols;
+		boxPlotData = newBoxPlotData;
+		rowCount = boxPlotData.length;
+	}	// End of function transpose()
+
+	function buildData() {
+		traceData = [];
+		y = [];
+		scatterX = [];
+		scatterY = [];
+		xMin = boxPlotData[0][1][0];
+		xMax = boxPlotData[0][1][0];
+		rowCount = boxPlotData.length;
+
+		if (boxPlotLegend.wantToTranspose) {
+			transpose();
+		}
+
+		var colLength = boxPlotData.length;
+
+		var windowHeight = 0;
+		var body = window.document.body;
+		if (window.innerHeight) {
+			windowHeight = window.innerHeight;
+		} else if (body.parentElement.clientHeight) {
+			windowHeight = body.parentElement.clientHeight;
+		} else if (body && body.clientHeight) {
+			windowHeight = body.clientHeight;
+		}
+		height = colLength * 40;
+		for (var j3 = 0; j3 < boxPlotData.length; j3++) {
+			for (var k3 = 0; k3 < boxPlotData[j3][1].length; k3++) {
+				if (boxPlotData[j3][1][k3] < xMin) xMin = boxPlotData[j3][1][k3];
+				if (boxPlotData[j3][1][k3] > xMax) xMax = boxPlotData[j3][1][k3];
+			}
+		}
+		var gd = document.getElementById('boxPlot1Div');
+		gd.style.height = height;
+
+		var originalCutPoint = 21;
+		for (var j0 = 0; j0 < colLength; j0++) {
+			var label = boxPlotData[j0][0];
+			var cutPoint = originalCutPoint;
+			if (label.length > cutPoint) {
+				var nSpace = label.indexOf(' ', cutPoint-2);
+				if (nSpace != -1) {
+					label = label.slice(0, nSpace) + '<br>' + label.slice(nSpace + 1);
+					boxPlotData[j0][0] = label;
+					cutPoint += originalCutPoint;
+					if (label.length > cutPoint) {
+						var nSpace = label.indexOf(' ', cutPoint-2);
+						if (nSpace != -1) {
+							label = label.slice(0, nSpace) + '<br>' + label.slice(nSpace + 1);
+							boxPlotData[j0][0] = label;
+						}
+					}
+					cutPoint += originalCutPoint;
+					if (label.length > cutPoint) {
+						var nSpace = label.indexOf(' ', cutPoint-2);
+						if (nSpace != -1) {
+							label = label.slice(0, nSpace) + '<br>' + label.slice(nSpace + 1);
+							boxPlotData[j0][0] = label;
+						}
+					}
+				}
+			}
+		}
+
+		pointCount = boxPlotData[0][1].length;
+		var legendCount = boxPlotData.length;
+		var trace = [];
+		for (var legendCounter = 0; legendCounter < legendCount; legendCounter++) {
+			var jInv = legendCount - legendCounter - 1;
+			for (var k = 0; k < pointCount; k++) {
+				y.push(boxPlotData[jInv][0]);
+				trace.push(boxPlotData[jInv][1][k]);
+			}
+		}
+		traceData.push(trace);
+
+		for (k = 0; k < rowCount; k++) {
+			scatterX.push([]);
+		}
+
+		for (var j = 0; j < legendCount; j++) {
+			scatterY.push(boxPlotData[j][0]);
+		}
+		kMax = rowCount;
+		if (blueIndex != -1) {
+			for (k = 0; k < kMax; k++) {
+				scatterX[0].push(boxPlotData[k][1][blueIndex]);
+			}
+		}
+		if (redIndex != -1) {
+			for (k = 0; k < kMax; k++) {
+				scatterX[1].push(boxPlotData[k][1][redIndex]);
+			}
+		}
+	}	// End of function function buildData()
+
+	function displayData(isFirstTime) {
+		var data = [];
+		var groupings = ['', '', ''];
+		var colors = ['#3D9970', '#FF4136', '#FF851B', '#703D99', '#36FF41', '#1BFF85', '#99703D', '#4136FF', '#851BFF', '#3D7099', '#FF3641', '#FF1B85', ];
+
+		var selectColumnBlue = document.getElementById('selectColumnBlue');
+		selectColumnBlue.length;
+		var jMax = selectColumnBlue.length - 1;
+		for( var j = jMax; j >= 1; j-- ) {
+			selectColumnBlue.remove(j);
+		}
+
+		jMax = boxPlotCols.length;
+		for( var j = 0; j < jMax; j++ ) {
+			var option = document.createElement("option");
+			option.text = boxPlotCols[j];
+			option.value = j;
+			selectColumnBlue.add(option);
+		}
+		if (isFirstTime) {
+			selectColumnBlue.selectedIndex = -1;
+		}
+		else {
+			selectColumnBlue.selectedIndex = blueIndex;
+		}
+
+		var selectColumnRed = document.getElementById('selectColumnRed');
+		selectColumnRed.length;
+		jMax = selectColumnRed.length - 1;
+		for (var j = jMax; j >= 0; j--) {
+			selectColumnRed.remove(j);
+		}
+
+		jMax = boxPlotCols.length;
+		for (var j = 0; j < jMax; j++) {
+			var option = document.createElement("option");
+			option.text = boxPlotCols[j];
+			option.value = j;
+			selectColumnRed.add(option);
+		}
+		if (isFirstTime) {
+			selectColumnRed.selectedIndex = -1;
+		}
+		else {
+			selectColumnRed.selectedIndex = redIndex;
+		}
+
+		var traceCount = traceData.length;
+		for (var traceCounter = 0; traceCounter < traceCount; traceCounter++) {
+			traceCounterMod = traceCounter % traceCount;
+			var trace = {
+				x: traceData[traceCounter],
+				y: y,
+				name: groupings[traceCounter],
+				boxmean: true | 'sd',
+				boxpoints: 'all',
+				jitter: 1,
+				marker: { color: colors[traceCounterMod] },
+				orientation: 'h',
+				pointpos: 0,
+				type: 'box',
+			};
+			data.push(trace);
+		}
+		var scatterTraceBlue = {
+			x: scatterX[0],
+			y: scatterY,
+			mode: 'markers',
+			symbol: 'x',
+			jitter: 1,
+			marker: { color: '#000088' },
+			legend: 'off',
+			//symbol: 'square-open',
+			type: 'scatter'
+		};
+		data.push(scatterTraceBlue);
+
+		scatterTraceRed = {
+			x: scatterX[1],
+			y: scatterY,
+			mode: 'markers',
+			symbol: 'x',
+			jitter: 1,
+			marker: { color: '#880000' },
+			legend: 'off',
+			//symbol: 'square-open',
+			type: 'scatter'
+		};
+		data.push(scatterTraceRed);
+
+		//data.push(scatterTrace);
+		// Put in the gray background rectangles
+		var backgroundShapes = [];
+		var startValue = -1.5;
+		var endValue = -0.5;
+		var halfRowCount = rowCount / 2 - 1;
+		for (var j1 = 0; j1 < halfRowCount; j1++) {
+			startValue += 2;
+			endValue += 2;
+			backgroundShape = {
+				"fillcolor": "#efefef",
+				"line": { "width": 0 },
+				"opacity": 0.5, "type": "rect", "y0": startValue, "y1": endValue, "yref": "y", "x0": 0, "x1": 1, "xref": "paper", "z": -2000, "layer": "below"
+			}
+			backgroundShapes.push(backgroundShape);
+		}
+
+		// Put in circles for the points. They don't line up quite right on the y-axis	
+		//startValue = -0.05;
+		//var fivePct = (xMax - xMin) * 0.005;
+		//endValue = startValue + 0.2;
+		//for (var j2 = 0; j2 < rowCount; j2++) {
+		//	var jInv = rowCount - j2 - 1;
+		//	circleShape = {
+		//		'type': 'circle',
+		//		'xref': 'x',
+		//		'yref': 'y',
+		//		'y0': startValue,
+		//		'y1': endValue,
+		//		'x0': boxPlotData[jInv][1][0] - fivePct,
+		//		'x1': boxPlotData[jInv][1][0] + fivePct,
+		//		"fillcolor": "#000088",
+		//		"line": { "width": 0.5, "color": '#000000' },
+		//		"z": 2,
+		//		"hover": function () { Math.round(boxPlotData[jInv][1][0]) }
+		//	}
+		//	backgroundShapes.push(circleShape);
+		//	startValue += 0.98;
+		//	endValue = startValue + 0.2;
+		//}
+
+		var layout = {
+			title: boxPlotLegend.title,
+			xaxis: {
+				title: boxPlotLegend.xAxis,
+				zeroline: false,
+				autorange: true
+			},
+			font: { family: 'Arial', size: 0, color: '#000000' },
+			margin: { l: 180, t: 30, r: 5, b: 5 },
+			showlegend: false,
+			boxmode: 'group',
+			shapes: backgroundShapes
+		};
+		Plotly.newPlot('boxPlot1Div', data, layout);
+	}	// End of function displayData()
+
+	function fill(N, func) {
+		var empty = Array.apply(null, Array(N));
+		return empty.map(func);
+	}
+	</script>
+</body>
