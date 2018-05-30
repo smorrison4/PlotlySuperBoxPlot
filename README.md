@@ -1,5 +1,6 @@
 # BQ-AutoComplete
-The javascript PlotlySuperBoxPlot uses the public domain Plotly.js library to make a Plotly Box Plot with the selected items highlight in blue and red.. It is released under the MIT License: http://www.opensource.org/licenses/mit-license.php
+The javascript PlotlySuperBoxPlot uses the public domain Plotly.js library to make a Plotly Box Plot with the selected items highlight in blue and red.
+It is released under the MIT License: http://www.opensource.org/licenses/mit-license.php
 (Plotly.js is also under the MIT license.)
 
 This can be useful if you want a regular box plot (aka box and whisker plot) but you want to compare one or two things relative to everything else.
